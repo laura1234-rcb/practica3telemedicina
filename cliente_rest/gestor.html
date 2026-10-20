@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Gestión de Recursos</title>
+    <link rel="stylesheet" href="estilos.css">
+    <script src="rest.js"></script>
+    <script src="rpc.js"></script>
+    <script src="gestor.js"></script>
+    <style>
+        .seccion { display:none; }
+        .activa { display:block; }
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
+        th { background-color: #080a52; }
+        .controles { margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="login" class="seccion activa">
+    <h2>Acceso Gestores</h2>
+    <div>Usuario: <input id="usuario" type="text"></div>
+    <div>Contraseña: <input id="password" type="password"></div>
+    <br>
+    <button onclick="entrar()">Entrar</button>
+    <button onclick="registrarse()">Registrarse</button>
+</div>
+
+<div id="registro" class="seccion">
+    <h2 id="tituloRegistro">Registro de Gestor</h2>
+    <div>Nombre: <input id="nombre" type="text"></div>
+    <div>Apellidos: <input id="apellidos" type="text"></div>
+    <div>Usuario: <input id="usu" type="text"></div>
+    <div>Contraseña: <input id="pass" type="password"></div>
+    <br>
+    <button onclick="guardar()">Guardar</button>
+    <button onclick="cancelar()">Cancelar</button>
+</div>
+
+<div id="inicio" class="seccion">
+    <h2 id="bienvenida"></h2>
+
+    <button onclick="logout()">Salir</button>
+    <button onclick="editardatos()">Editar mis datos</button>
+    <button onclick="nuevoRecurso()">Añadir recurso</button>
+    <button onclick="enviarMinisterio()">Enviar reservas al Ministerio</button>
+    <h3>Avisos</h3>
+    <table border="1" width="100%">
+        <thead><tr><th>Fecha</th><th>De</th><th>Aviso</th></tr></thead>
+        <tbody id="listaAvisos"></tbody>
+    </table>
+
+    <h3>Ranking de reservas por área médica</h3>
+<table>
+    <thead><tr><th>#</th><th>Área Médica</th><th>Reservas Totales</th></tr></thead>
+    <tbody id="tablaRanking"></tbody>
+</table>
+
+    <div class="controles">
+        <h3>Búsqueda de Recursos</h3>
+        <label>Categoría:</label> <select id="fCategoria"></select>
+        <label>Modelo:</label> <select id="fModelo"></select>
+        <label>Ubicación:</label> <select id="fUbicacion"></select>
+        <label>Estado:</label>
+        <select id="fEstado">
+            <option value="">Todos</option>
+            <option value="0">Operativo</option>
+            <option value="1">Baja</option>
+            <option value="2">Mantenimiento</option>
+        </select>
+        <button onclick="buscar()">BUSCAR</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nº Serie</th>
+                <th>Categoría</th>
+                <th>Modelo</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th colspan="2"></th>
+            </tr>
+        </thead>
+        <tbody id="tablaRecursos">
+        </tbody>
+    </table>
+</div>
+
+<div id="ficha" class="seccion">
+    <h2>Datos recurso</h2>
+    <div>
+        <label>Categoría:</label> <select id="rCategoria"></select><br>
+        <label>Modelo:</label> <select id="rModelo"></select><br>
+        <label>Número de serie:</label> <input id="rSerie" type="text"><br>
+        <label>Ubicación:</label> <select id="rUbicacion"></select><br>
+        <label>Estado:</label>
+        <select id="rEstado">
+            <option value="0">Operativo</option>
+            <option value="1">Baja</option>
+            <option value="2">Mantenimiento</option>
+        </select><br>
+        <button onclick="guardarRecurso()">Guardar</button>
+        <button onclick="cambiarSeccion('inicio')">Volver al listado</button>
+    </div>
+
+    
+    
+
+
+    
+    <h3>Reservas</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Sanitario</th>
+                <th>Horas estimadas</th>
+                <th>Fecha petición</th>
+                <th>Fecha inicio</th>
+                <th>Fecha fin</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tablaReservasFicha">
+        </tbody>
+    </table>
+
+    <h3>Reseñas</h3>
+    <div id="listaResenyasFicha"></div>
+</div>
+
+</body>
+</html>

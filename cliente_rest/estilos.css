@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f5f5;
+}
+
+h2 {
+    color: #333;
+}
+
+.seccion {
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.activa {
+    display: block;
+}
+
+input, select {
+    padding: 5px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    width: 250px;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px;
+    text-align: left;
+}
+
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+/* COLORES PARA RESERVAS */
+.finalizada {
+    background-color: white;
+}
+
+.enuso-normal {
+    background-color: #e0f7fa;  /* Azul clarito */
+}
+
+.enuso-excedido {
+    background-color: #ffebee;  /* Rojo clarito */
+}
+
+.pendiente {
+    background-color: #e8f5e9;  /* Verde clarito */
+}
+
+#bienvenida {
+    background-color: #e0e0e0;
+    padding: 10px;
+    border-radius: 3px;
+    margin-bottom: 15px;
+}
