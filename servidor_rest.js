@@ -5,17 +5,20 @@ var app = express();
 const { createClient } = require("@supabase/supabase-js");
 
 // 2. Configurar con tu URL y tu Public Key (anon key)
-const supabaseUrl = "https://xmmupldgjzqfymodbbxy.supabase.co";
-const supabaseKey = "sb_publishable_lMtejO83i5npxiZkXqHCqA_VYX-K47t"; // <--- Pega aquí tu public key
+const supabaseUrl = "https://tu-proyecto.supabase.co";
+const supabaseKey = "TU_PUBLIC_ANON_KEY_AQUI"; // <--- Pega aquí tu public key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 var jwt = require("jwt-simple");
 var clave = "miClaveSecretaDelGestor";
 
-app.use("/appCliente", express.static("cliente"));
+app.use("/appCliente", express.static("cliente_rest"));
 app.use(express.json());
 app.use("/rpc", express.static("cliente_rpc"));
 app.use("/rest", express.static("cliente_rest"));
+
+// La raíz redirige a la app
+app.get("/", (req, res) => res.redirect("/appCliente/"));
 
 // ------------------- GESTORES -------------------
 
@@ -346,6 +349,7 @@ app.delete("/api/recursos/:id", async (req, res) => {
     res.status(200).json("Recurso borrado");
 });
 
-app.listen(3000, function () {
-    console.log("Servidor REST en puerto 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, function () {
+    console.log("Servidor REST en puerto " + PORT);
 });
