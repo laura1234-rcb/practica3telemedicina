@@ -16,6 +16,7 @@ app.use("/appCliente", express.static("cliente_rest"));
 app.use(express.json());
 app.use("/rpc", express.static("cliente_rpc"));
 app.use("/rest", express.static("cliente_rest"));
+app.use("/", express.static("cliente_rest"));
 
 // La raíz redirige a la app
 app.get("/", (req, res) => res.redirect("/appCliente/"));
