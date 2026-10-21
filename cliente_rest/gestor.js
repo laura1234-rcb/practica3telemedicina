@@ -481,15 +481,18 @@ function verTotalPartes(idRecurso) {
         alert("Total de partes: " + total);
     });
 }
+// ===================== PARTE 1: MINISTERIO =====================
 
-
-var MINISTERIO = "https://undefined.ua.es/telemedicina/api/datos"; 
-var id_area = 11; 
+var MINISTERIO = "https://undefined.ua.es/telemedicina/api/datos";
+var id_area = 11;
 
 var AREAS = ["", "Alergología", "Anestesiología", "Cardiología", "Cirugía General", "Dermatología",
     "Aparato Digestivo", "Endocrinología", "Ginecología", "Hematología", "Medicina Interna",
     "Neumología", "Neurología", "Oftalmología", "Oncología", "Pediatría", "Psiquiatría",
     "Traumatología", "Urología"];
+
+
+// ---------- ENVÍO (POST) ----------
 
 function enviarMinisterio() {
     if (!confirm("Se enviarán todas las reservas al Ministerio. ¿Continuar?")) return;
@@ -498,7 +501,7 @@ function enviarMinisterio() {
             alert("Error al obtener los recursos");
             return;
         }
-        var realizadas = [];
+        var reservas = [];
         var faltan = recursos.length;
         if (faltan === 0) {
             alert("No hay recursos");
@@ -508,62 +511,13 @@ function enviarMinisterio() {
             rest.get("/api/recursos/" + rec.id + "/reservas", function (st, lista) {
                 if (st == 200) {
                     lista.forEach(function (r) {
-                        if (r.fecha_inicio) realizadas.push({ reserva: r, recurso: rec });
+                        reservas.push({ reserva: r, recurso: rec });
                     });
                 }
                 faltan--;
-                if (faltan === 0) agruparPorArea(realizadas);
+                if (faltan === 0) agruparPorArea(reservas);
             });
         });
-    });
-}
-
-
-function cargarRanking() {
-    var tabla = document.getElementById("tablaRanking");
-    rest.get(MINISTERIO, function (estado, datos) {
-        if (estado != 200 || datos === null || typeof datos !== "object") {
-            tabla.innerHTML = "<tr><td colspan='3'>No se pudo obtener el ranking</td></tr>";
-            return;
-        }
-        console.log("Respuesta del Ministerio:", datos);
-
-        var total = {};
-        function sumar(idArea, n) {
-            idArea = parseInt(idArea);
-            if (!(idArea >= 1 && idArea <= 18)) return;                
-            if (typeof n !== "number" || !isFinite(n) || n < 0) return; 
-            total[idArea] = (total[idArea] || 0) + n;
-        }
-        function contar(idArea, v) {
-            if (v === null || typeof v !== "object") return;
-            if (Array.isArray(v.datos)) sumar(idArea, v.datos.length);  
-            else if (v.nombre !== undefined) sumar(idArea, 1);          
-        }
-
-        if (Array.isArray(datos)) {
-            datos.forEach(function (e) { if (e) contar(e.id_area, e); });
-        } else {
-            Object.keys(datos).forEach(function (k) {
-                var v = datos[k];
-                if (Array.isArray(v)) v.forEach(function (x) { contar(k, x); });
-                else contar(k, v);
-            });
-        }
-
-                var lista = [];
-        for (var a = 1; a <= 18; a++) {
-            lista.push({ area: a, total: total[a] || 0 });
-        }
-        lista.sort(function (a, b) { return b.total - a.total || a.area - b.area; });
-
-        var html = "";
-        for (var i = 0; i < lista.length; i++) {
-            html += "<tr><td>" + (i + 1) + "</td>" +
-                "<td>" + AREAS[lista[i].area] + "</td>" +
-                "<td>" + lista[i].total + "</td></tr>";
-        }
-        tabla.innerHTML = html || "<tr><td colspan='3'>Sin datos</td></tr>";
     });
 }
 
@@ -574,22 +528,23 @@ function categoriaDeModelo(idModelo) {
     return cat ? cat.nombre : "";
 }
 
-function agruparPorArea(realizadas) {
-    if (realizadas.length === 0) {
-        alert("No hay reservas realizadas que enviar");
+function agruparPorArea(reservas) {
+    if (reservas.length === 0) {
+        alert("No hay reservas que enviar");
         return;
     }
     var porArea = {};
     porArea[id_area] = [];
     var errores = 0;
-    var faltan = realizadas.length;
-    realizadas.forEach(function (item) {
+    var faltan = reservas.length;
+    reservas.forEach(function (item) {
         rest.get("/api/sanitarios/" + item.reserva.sanitario, function (st, san) {
-            if (st == 200 && san) {
+            var categoria = categoriaDeModelo(item.recurso.modelo);
+            if (st == 200 && san && categoria !== "") {
                 porArea[id_area].push({
                     nombre: san.nombre,
                     apellidos: san.apellidos,
-                    "categoría": categoriaDeModelo(item.recurso.modelo),
+                    "categoría": categoria,
                     horas_estimadas: item.reserva.horas_estimadas,
                     fec_pet: item.reserva.fecha_peticion,
                     fec_ini: item.reserva.fecha_inicio,
@@ -600,7 +555,7 @@ function agruparPorArea(realizadas) {
             }
             faltan--;
             if (faltan === 0) {
-                if (errores > 0) alert(errores + " reserva(s) no se enviarán porque no se pudo obtener el sanitario");
+                if (errores > 0) alert(errores + " reserva(s) no se enviarán porque faltan datos del sanitario o de la categoría");
                 if (porArea[id_area].length === 0) return;
                 enviarPorAreas(porArea);
             }
@@ -610,11 +565,8 @@ function agruparPorArea(realizadas) {
 
 function enviarPorAreas(porArea) {
     var ids = Object.keys(porArea);
-    if (ids.length === 0) {
-        alert("No se pudo obtener el área de los sanitarios");
-        return;
-    }
-    var hoy = new Date().toLocaleDateString("sv-SE");      var faltan = ids.length;
+    var hoy = new Date().toLocaleDateString("sv-SE");
+    var faltan = ids.length;
     var fallos = 0;
     ids.forEach(function (id) {
         var cuerpo = { id_area: parseInt(id), fecha: hoy, datos: porArea[id] };
@@ -622,7 +574,7 @@ function enviarPorAreas(porArea) {
             if (estado < 200 || estado >= 300) fallos++;
             faltan--;
             if (faltan === 0) {
-                cargarRanking()
+                cargarRanking();
                 alert(fallos > 0 ? "Fallaron " + fallos + " envíos al Ministerio" : "Reservas enviadas al Ministerio");
             }
         });
@@ -630,15 +582,153 @@ function enviarPorAreas(porArea) {
 }
 
 
+// ---------- COMPROBACIONES ----------
+
+// Un registro del GET es correcto solo si trae un nombre con texto
+// y la clave "categoría" CON TILDE, también con texto
+function registroCorrecto(registro) {
+    if (registro === null || typeof registro !== "object") return false;
+    if (typeof registro.nombre !== "string" || registro.nombre.trim() === "") return false;
+    if (typeof registro["categoría"] !== "string" || registro["categoría"].trim() === "") return false;
+    return true;
+}
+
+// Para comparar textos sin mayúsculas, sin espacios sobrantes y sin tildes
+function normalizar(texto) {
+    return String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
 
 
+// ---------- LECTURA DEL GET ----------
+
+// Pide los datos al Ministerio y devuelve una lista de reservas ya comprobadas,
+// o null si el servidor no responde bien.
+// Cada elemento x tiene: area, nombre, apellidos, categoria, horas, fec_pet, fec_ini, fecha_fin
+// USO:
+//   obtenerRegistros(function (lista) {
+//       if (lista === null) return;
+//       var res = lista.filter(function (x) { return CONDICIÓN; });
+//       // res.length = número de reservas que cumplen la condición
+//   });
+function obtenerRegistros(callback) {
+    rest.get(MINISTERIO, function (estado, datos) {
+        if (estado != 200 || datos === null || typeof datos !== "object") {
+            callback(null);
+            return;
+        }
+        console.log("Respuesta del Ministerio:", datos);
+        var lista = [];
+
+        function anadir(idArea, r) {
+            idArea = parseInt(idArea);
+            if (!(idArea >= 1 && idArea <= 18)) return;
+            if (!registroCorrecto(r)) return;
+            lista.push({
+                area: idArea,
+                nombre: r.nombre.trim(),
+                apellidos: r.apellidos ? String(r.apellidos).trim() : "",
+                categoria: r["categoría"].trim(),
+                horas: parseFloat(r.horas_estimadas),
+                fec_pet: r.fec_pet,
+                fec_ini: r.fec_ini,
+                fecha_fin: r.fecha_fin
+            });
+        }
+        function recorrer(idArea, v) {
+            if (v === null || typeof v !== "object") return;
+            if (Array.isArray(v.datos)) {
+                v.datos.forEach(function (r) { anadir(idArea, r); });
+            } else {
+                anadir(idArea, v);
+            }
+        }
+
+        if (Array.isArray(datos)) {
+            datos.forEach(function (e) { if (e) recorrer(e.id_area, e); });
+        } else {
+            Object.keys(datos).forEach(function (idArea) {
+                if (Array.isArray(datos[idArea])) {
+                    datos[idArea].forEach(function (x) { recorrer(idArea, x); });
+                } else {
+                    recorrer(idArea, datos[idArea]);
+                }
+            });
+        }
+        callback(lista);
+    });
+}
 
 
+// ---------- RANKING ----------
+
+function cargarRanking() {
+    var tabla = document.getElementById("tablaRanking");
+    obtenerRegistros(function (lista) {
+        if (lista === null) {
+            tabla.innerHTML = "<tr><td colspan='3'>No se pudo obtener el ranking</td></tr>";
+            return;
+        }
+
+        // un contador por área, todos a 0
+        var total = {};
+        for (var a = 1; a <= 18; a++) total[a] = 0;
+
+        // cada reserva correcta suma 1 a su área
+        lista.forEach(function (x) { total[x.area]++; });
+
+        // ordenar de mayor a menor
+        var ranking = [];
+        for (var b = 1; b <= 18; b++) ranking.push({ area: b, total: total[b] });
+        ranking.sort(function (x, y) { return y.total - x.total || x.area - y.area; });
+
+        var html = "";
+        for (var i = 0; i < ranking.length; i++) {
+            html += "<tr><td>" + (i + 1) + "</td>" +
+                "<td>" + AREAS[ranking[i].area] + "</td>" +
+                "<td>" + ranking[i].total + "</td></tr>";
+        }
+        tabla.innerHTML = html;
+    });
+}
 
 
-
-
-
-
-
-
+//POR NOMBRE
+/**
+ * function porNombre(nombre) {
+    if (!valorValido(nombre)) return;
+    consultar("Reservas de " + nombre.trim(), function (x) {
+        return normalizar(x.nombre) === normalizar(nombre);
+    });
+}
+*/
+//POR APELLIDO
+/**
+ * function porApellido(apellido) {
+    if (!valorValido(apellido)) return;
+    consultar("Reservas con apellido " + apellido.trim(), function (x) {
+        return normalizar(x.apellidos).indexOf(normalizar(apellido)) !== -1;
+    });
+}
+ */
+//POR CATEGORIA
+/**
+ * function porCategoria(categoria) {
+    if (!valorValido(categoria)) return;
+    consultar("Reservas de " + categoria.trim(), function (x) {
+        return normalizar(x.categoria) === normalizar(categoria);
+    });
+}
+ */
+//POR AREA
+/**
+ * function porArea(numero) {
+    var n = parseInt(numero);
+    if (!(n >= 1 && n <= 18)) {
+        document.getElementById("resultado").textContent = "El área debe ser un número entre 1 y 18";
+        return;
+    }
+    consultar("Reservas del área " + AREAS[n], function (x) {
+        return x.area === n;
+    });
+}
+ */
